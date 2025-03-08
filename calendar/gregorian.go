@@ -1,6 +1,8 @@
 package calendar
 
-var miladiDaysInMonth = []int{0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+var miladiDaysInMonth = []int{0,
+	31, 28, 31, 30, 31, 30,
+	31, 31, 30, 31, 30, 31}
 
 type Gregorian struct {
 	Year  int
@@ -17,24 +19,30 @@ func (g Gregorian) ToDays() int {
 		}
 		days += daysMonth
 	}
-	for i := 622; i < g.Year; i++ {
-		days += 365
-		if g.Kabise(i) {
-			days++
-		}
-	}
+	days += (g.Year - 622) * 365
+	days += g.Year / 4
+	days -= g.Year / 100
+	days += g.Year / 400
+	days -= 622 / 4
+	days += 622 / 100
+	days -= 622 / 400
+
 	days -= 80 // چون شمسی از 22 مارس شروع شده
+
 	return days
 }
 
 func (g Gregorian) FromDays(days int) Calendar {
-	year := 622
-	days += 80
+	year := 621       // شروع دوره 4 ساله
+	days += 365 + 80  // 365روز برای یکسال عقب رفتن از مبدا و 80 روز برای از اول سال 622 تا مبدا
+	D4 := days / 1461 // تعداد دوره های 4 ساله
+	D100 := D4 / 25   // تعداد دوره های 100 ساله
+	D400 := D100 / 4  // تعداد دوره های 400 ساله
+	year += D4 * 4
+	days += D100 - D400
+	days = days % 1461
 	for {
 		daysInYear := 365
-		if g.Kabise(year) {
-			daysInYear = 366
-		}
 		if days < daysInYear {
 			break
 		}
@@ -43,7 +51,7 @@ func (g Gregorian) FromDays(days int) Calendar {
 	}
 
 	month := 1
-	for i := 1; i <= 12; i++ {
+	for i := 1; i < 12; i++ {
 		daysInMonth := miladiDaysInMonth[i]
 		if i == 2 && g.Kabise(year) {
 			daysInMonth = 29
